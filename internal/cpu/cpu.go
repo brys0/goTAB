@@ -3,6 +3,8 @@ package cpu
 import (
 	"github.com/jaypipes/ghw"
 	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/host"
+	"strings"
 )
 
 type CPU struct {
@@ -23,7 +25,13 @@ func GetCPUInfo() (*CPU, error) {
 	// GET the first cpu, we don't support multiple CPU support yet.
 	processor := processors[0]
 
-	topology, err := ghw.Topology()
+	ghwProcessors, err := ghw.CPU()
+
+	if err != nil {
+		return nil, err
+	}
+
+	arch, err := host.Info()
 
 	if err != nil {
 		return nil, err
@@ -31,9 +39,21 @@ func GetCPUInfo() (*CPU, error) {
 
 	return &CPU{
 		Product:      processor.ModelName,
-		Vendor:       processor.VendorID,
-		Cores:        processor.Cores,
-		Architecture: topology.Architecture.String(),
+		Vendor:       TrimCPUName(processor.VendorID),
+		Cores:        int32(ghwProcessors.TotalCores),
+		Architecture: arch.KernelArch,
 		HzAdvertised: processor.Mhz,
 	}, nil
+}
+
+func TrimCPUName(name string) string {
+	if strings.Contains(strings.ToLower(name), "intel") {
+		return "Intel"
+	}
+
+	if strings.Contains(strings.ToLower(name), "amd") {
+		return "Amd"
+	}
+
+	return name
 }

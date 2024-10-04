@@ -4,7 +4,7 @@ const (
 	GIGABYTES = 1073741824
 )
 
-type MemoryInfo struct {
+type Memory struct {
 	Id     string `json:"id"`
 	Class  string `json:"class"`
 	PhysId string `json:"physid"`
@@ -16,6 +16,6 @@ type MemoryInfo struct {
 	FormFactor string
 }
 
-//func Get_memory_info() ([]*MemoryInfo, error) {
+//func Get_memory_info() ([]*Memory, error) {
 //	return nil, errors.New("Method not found for OS: " + runtime.GOOS)
 //}

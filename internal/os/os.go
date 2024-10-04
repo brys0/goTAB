@@ -1,6 +1,8 @@
 package os
 
-import "github.com/shirou/gopsutil/host"
+import (
+	"github.com/shirou/gopsutil/host"
+)
 
 type OS struct {
 	//PrettyName string `json:"pretty_name"`

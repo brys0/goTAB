@@ -1,14 +1,25 @@
 package main
 
 import (
-	"github.com/brys0/goTAB/internal/memory"
+	"fmt"
+	"github.com/brys0/goTAB/internal/app"
+	"time"
 )
 
 func main() {
-	_, err := memory.Get_memory_info()
+	defer timer("Application")()
+	application := app.CreateNewTAB(true)
 
-	if err != nil {
-		panic(err)
+	//verbose := true
+
+	application.GetHardware()
+
+	application.PromptGPU()
+}
+
+func timer(name string) func() {
+	start := time.Now()
+	return func() {
+		fmt.Printf("%s took %v\n", name, time.Since(start))
 	}
-
 }
