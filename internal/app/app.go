@@ -258,9 +258,9 @@ func (app *App) MainTUIApp(p *tea.Program) {
 	// 	}
 	// }
 
-	p.Quit()
+	// p.Quit()
 
-	log.Fatal("Coming soon.")
+	// log.Fatal("Coming soon.")
 }
 
 func (app *App) DownloadFFmpeg(p *tea.Program) {
@@ -300,7 +300,7 @@ func (app *App) DownloadVideos(p *tea.Program) {
 			continue
 		}
 
-		go api.DownloadFile(test.SourceURL, location, func(ratio float64) {
+		api.DownloadFile(test.SourceURL, location, func(ratio float64) {
 			p.Send(tui.ProgressInfo{Type: "task", Progress: ratio})
 
 			// Holy math
