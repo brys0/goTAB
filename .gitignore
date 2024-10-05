@@ -1,2 +1,6 @@
 .idea/
 .git/
+ffmpeg/*
+videos/*
+main.exe
+main

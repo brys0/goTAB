@@ -16,12 +16,12 @@ type HardwareInfo struct {
 }
 
 type FFmpegInfo struct {
-	FFmpegSourceURL string
-	FFmpegVersion   string
-	FFmpegHashes    []HashedFile
+	FFmpegSourceURL string       `json:"ffmpeg_source_url"`
+	FFmpegVersion   string       `json:"ffmpeg_version"`
+	FFmpegHashes    []HashedFile `json:"ffmpeg_hashs"`
 }
 
 type HashedFile struct {
-	Type string
-	Hash string
+	Type string `json:"type"`
+	Hash string `json:"hash"`
 }
