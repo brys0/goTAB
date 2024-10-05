@@ -12,9 +12,11 @@ import (
 	"path"
 	"strings"
 
+	"github.com/brys0/goTAB/internal/fio"
+	"github.com/brys0/goTAB/internal/worker"
+
 	"github.com/brys0/goTAB/internal/api"
 	"github.com/brys0/goTAB/internal/cpu"
-	"github.com/brys0/goTAB/internal/fio"
 	"github.com/brys0/goTAB/internal/gpu"
 	"github.com/brys0/goTAB/internal/hardware"
 	"github.com/brys0/goTAB/internal/memory"
@@ -242,21 +244,34 @@ func (app *App) MainTUIApp(p *tea.Program) {
 	app.DownloadFFmpeg(p) // Download or check ffmpeg hash
 	app.DownloadVideos(p) // Download the videos to transcode from the test
 
-	// for t := range app.Tests {
-	// 	test := app.Tests[t]
+	// p.ReleaseTerminal()
+	selectedGraphics := strings.ToLower(app.HwInfo.GPU[app.SelectedGraphics[0]].Vendor)
+	completed_tests := 0
 
-	// 	for d := range test.Data {
-	// 		data := test.Data[d]
+	for t := range app.Tests {
+		test := app.Tests[t]
+		finished_subtests := 0
 
-	// 		for a := range data.Arguments {
-	// 			arg := data.Arguments[a]
+		for d := range test.Data {
+			data := test.Data[d]
 
-	// 			if arg.Type == "cpu" {
-	// 				worker.StartWorker("ffmpeg/bin/ffmpeg.exe", arg.Arguments, fmt.Sprintf("%v.mkv", test.Name))
-	// 			}
-	// 		}
-	// 	}
-	// }
+			for a := range data.Arguments {
+				arg := data.Arguments[a]
+
+				if arg.Type == selectedGraphics {
+					p.Send(tui.TaskInfo(fmt.Sprintf("%s (%s -> %s) (Subtests %d/%d)", test.Name, data.FromResolution, data.ToResolution, finished_subtests, len(test.Data))))
+
+					worker.CreateWorkManager(p, strings.Replace(strings.ReplaceAll(arg.Arguments, "{gpu}", "0"), "-hwaccel cuda", "-hwaccel nvdec", 1), fmt.Sprintf("videos/%v.mkv", test.Name))
+
+					finished_subtests++
+					p.Send(tui.ProgressInfo{Type: "task", Progress: float64(finished_subtests) / float64(len(test.Data))})
+				}
+			}
+		}
+
+		completed_tests++
+		p.Send(tui.ProgressInfo{Type: "overall", Progress: float64(completed_tests) / float64(len(app.Tests))})
+	}
 
 	// p.Quit()
 

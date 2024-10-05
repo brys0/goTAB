@@ -19,6 +19,7 @@ type ProgressInfo struct {
 }
 
 type TaskInfo string
+type WorkerReset bool
 
 type TuiTaskModel struct {
 	OverallPercent float64
@@ -28,7 +29,16 @@ type TuiTaskModel struct {
 	currentTask        *string
 	overallProgress    progress.Model
 	taskProgress       progress.Model
-	workers            map[string]bool
+	workers            map[string]TuiWorkerInfo
+}
+
+type TuiWorkerInfo struct {
+	ID       string
+	Speed    float64
+	Frame    int
+	Done     bool
+	Errored  bool
+	ErrorStr *string
 }
 
 func CreateTUIDisplay() *TuiTaskModel {
@@ -42,6 +52,7 @@ func CreateTUIDisplay() *TuiTaskModel {
 		overallProgress:    overallProgress,
 		taskProgress:       taskProgress,
 		shouldRenderBanner: true,
+		workers:            make(map[string]TuiWorkerInfo, 0),
 	}
 
 	return &model
@@ -85,6 +96,12 @@ func (t TuiTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.OverallPercent = msg.Progress
 		}
 
+	case TuiWorkerInfo:
+		t.workers[msg.ID] = msg
+	case WorkerReset:
+		for k := range t.workers {
+			delete(t.workers, k)
+		}
 	case TaskInfo:
 		t.currentTask = (*string)(&msg)
 	}
@@ -100,9 +117,10 @@ func (t TuiTaskModel) View() string {
 		view += GetBannerString()
 	}
 
+	view += t.RenderWorkerInfo() + "\n\n"
 	// Display current task string
 	if t.currentTask != nil {
-		view += "  " + *t.currentTask + "  "
+		view += *t.currentTask + "  "
 	}
 
 	// Task progress bar
@@ -116,6 +134,33 @@ func (t TuiTaskModel) View() string {
 	return view
 }
 
+func (t TuiTaskModel) RenderWorkerInfo() string {
+	workerIcon := "⬤"
+
+	workerRunningColor := lipgloss.NewStyle().Foreground(lipgloss.Color("#E9D502 "))
+	workerDoneColor := lipgloss.NewStyle().Foreground(lipgloss.Color("#4BB543"))
+	workerErroredColor := lipgloss.NewStyle().Foreground(lipgloss.Color("#f93e25"))
+
+	workerStr := "Workers\n"
+	pad := "  "
+	for _, worker := range t.workers {
+		if worker.Errored {
+			workerStr += workerErroredColor.SetString(workerIcon).String() + pad
+			// workerStr += "\n" + *worker.ErrorStr + "\n"
+			continue
+		}
+
+		if worker.Done {
+			workerStr += workerDoneColor.SetString(workerIcon).String() + pad
+			continue
+		}
+
+		workerStr += workerRunningColor.SetString(workerIcon).String() + pad
+		continue
+	}
+
+	return workerStr
+}
 func GetBannerString() string {
 	return "\n\n" +
 		"\033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;21;13;27m.\033[38;2;53;33;67m:\033[38;2;53;34;68m:\033[38;2;21;14;28m.\033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[38;2;0;0;0m \033[0m\n" +

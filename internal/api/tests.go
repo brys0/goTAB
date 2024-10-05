@@ -25,7 +25,7 @@ type Test struct {
 type TestData struct {
 	ID             string             `json:"id"`
 	FromResolution string             `json:"from_resolution"`
-	ToResoulution  string             `json:"to_resolution"`
+	ToResolution   string             `json:"to_resolution"`
 	Bitrate        int                `json:"bitrate"`
 	Arguments      []TestDataArgument `json:"arguments"`
 }
