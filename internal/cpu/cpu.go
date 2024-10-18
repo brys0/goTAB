@@ -46,6 +46,22 @@ func GetCPUInfo() (*CPU, error) {
 	}, nil
 }
 
+func (c *CPU) GetCPUArch() string {
+	if strings.Contains(c.Architecture, "64") {
+		return "amd64"
+	}
+
+	if strings.Contains(c.Architecture, "aarch64") {
+		return "arm64"
+	}
+
+	if strings.Contains(c.Architecture, "arm64") {
+		return "arm"
+	}
+
+	return c.Architecture
+}
+
 func TrimCPUName(name string) string {
 	if strings.Contains(strings.ToLower(name), "intel") {
 		return "Intel"

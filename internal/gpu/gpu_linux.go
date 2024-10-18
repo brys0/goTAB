@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 func GetGPUInfo() ([]GPU, error) {
@@ -29,4 +30,8 @@ func GetGPUInfo() ([]GPU, error) {
 	}
 
 	return gpus, nil
+}
+
+func (gpu *GPU) GetDeviceName() string {
+	return strings.Replace(gpu.BusInfo, "@", "-", 1)
 }

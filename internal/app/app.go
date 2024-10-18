@@ -5,6 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"hash"
 	"io"
 	"net/url"
@@ -135,7 +136,7 @@ func (app *App) ValidatePlatform() {
 	for i := range platforms {
 		platform := platforms[i]
 
-		if strings.Contains(strings.ToLower(app.HwInfo.OS.Name), strings.ToLower(platform.Type)) {
+		if strings.Contains(strings.ToLower(app.HwInfo.OS.Name), strings.ToLower(platform.Type)) && strings.Contains(app.HwInfo.CPU.GetCPUArch(), platform.Architecture) {
 			platform_id = &platform.Id
 		}
 	}
@@ -159,7 +160,7 @@ func (app *App) FetchPlatformTests() {
 	testRoot, err := app.API.FetchPlatformTests(*app.Platform)
 
 	if err != nil {
-		log.Fatal("An error occured when fetching platform info from the server", "err", err)
+		log.Fatal("An error occurred when fetching platform info from the server", "err", err)
 	}
 
 	app.Token = &testRoot.Token
@@ -238,6 +239,7 @@ func (app *App) StartTUIApp() {
 	go app.MainTUIApp(p)
 
 	p.Run()
+
 }
 
 func (app *App) MainTUIApp(p *tea.Program) {
@@ -258,10 +260,14 @@ func (app *App) MainTUIApp(p *tea.Program) {
 			for a := range data.Arguments {
 				arg := data.Arguments[a]
 
-				if arg.Type == selectedGraphics {
+				log.Infof("%v graphics", selectedGraphics)
+				if strings.Contains(selectedGraphics, arg.Type) {
+
+					spew.Dump(app.HwInfo.GPU[0])
+					log.Infof("Running command: %v, video %v", app.HwInfo.GPU[0].GetDeviceName(), fmt.Sprintf("videos/%v.mkv", test.Name))
 					p.Send(tui.TaskInfo(fmt.Sprintf("%s (%s -> %s) (Subtests %d/%d)", test.Name, data.FromResolution, data.ToResolution, finished_subtests, len(test.Data))))
 
-					worker.CreateWorkManager(p, strings.Replace(strings.ReplaceAll(arg.Arguments, "{gpu}", "0"), "-hwaccel cuda", "-hwaccel nvdec", 1), fmt.Sprintf("videos/%v.mkv", test.Name))
+					worker.CreateWorkManager(p, strings.Replace(strings.ReplaceAll(arg.Arguments, "{gpu}", app.HwInfo.GPU[0].GetDeviceName()), "-hwaccel cuda", "-hwaccel nvdec", 1), fmt.Sprintf("videos/%v.mkv", test.Name))
 
 					finished_subtests++
 					p.Send(tui.ProgressInfo{Type: "task", Progress: float64(finished_subtests) / float64(len(test.Data))})
@@ -291,7 +297,11 @@ func (app *App) DownloadFFmpeg(p *tea.Program) {
 
 	// Unzip files
 	p.Send(tui.TaskInfo("Extracting FFmpeg..."))
-	fio.Unzip(location, "ffmpeg/bin/")
+	p.Send(tui.TaskInfo(fmt.Sprintf("Location is %v", location)))
+	err := fio.Unzip(location, "ffmpeg/bin/")
+	if err != nil {
+		log.Fatal("Couldn't extract ffmpeg", "err", err)
+	}
 	p.Send(tui.TaskInfo("Extracted FFmpeg"))
 }
 

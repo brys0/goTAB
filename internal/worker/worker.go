@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"github.com/charmbracelet/log"
 	"io"
 	"os/exec"
 	"strings"
@@ -15,6 +16,7 @@ import (
 // TODO: This code is terrible, my brain hurts. go doesn't like arguments in exec.Command with just a string, so I have to manually recreate it.
 // Brilliant.
 func StartWorker(ffmpeg_path string, args string, video string, p *tea.Program, done chan int) {
+	log.Infof("%v %v", ffmpeg_path, args)
 	id := uuid.New()
 	p.Send(tui.TuiWorkerInfo{
 		ID:       id.String(),
@@ -121,6 +123,7 @@ type FrameStat struct {
 }
 
 func decodeStatsFrames(stat string) {
+	//log.Error(stat)
 	// println(stat)
 	// if !strings.Contains(stat, "frame") {
 	// 	return
