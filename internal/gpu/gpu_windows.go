@@ -28,3 +28,7 @@ func GetGPUInfo() ([]GPU, error) {
 	}
 	return parsedCards, nil
 }
+
+func (gpu *GPU) GetDeviceName() string {
+	return gpu.PhysicalID
+}
