@@ -5,7 +5,6 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"hash"
 	"io"
 	"net/url"
@@ -246,7 +245,7 @@ func (app *App) MainTUIApp(p *tea.Program) {
 	app.DownloadFFmpeg(p) // Download or check ffmpeg hash
 	app.DownloadVideos(p) // Download the videos to transcode from the test
 
-	// p.ReleaseTerminal()
+	p.ReleaseTerminal()
 	selectedGraphics := strings.ToLower(app.HwInfo.GPU[app.SelectedGraphics[0]].Vendor)
 	completed_tests := 0
 
@@ -259,15 +258,11 @@ func (app *App) MainTUIApp(p *tea.Program) {
 
 			for a := range data.Arguments {
 				arg := data.Arguments[a]
-
-				log.Infof("%v graphics", selectedGraphics)
 				if strings.Contains(selectedGraphics, arg.Type) {
 
-					spew.Dump(app.HwInfo.GPU[0])
-					log.Infof("Running command: %v, video %v", app.HwInfo.GPU[0].GetDeviceName(), fmt.Sprintf("videos/%v.mkv", test.Name))
 					p.Send(tui.TaskInfo(fmt.Sprintf("%s (%s -> %s) (Subtests %d/%d)", test.Name, data.FromResolution, data.ToResolution, finished_subtests, len(test.Data))))
 
-					worker.CreateWorkManager(p, strings.Replace(strings.ReplaceAll(arg.Arguments, "{gpu}", app.HwInfo.GPU[0].GetDeviceName()), "-hwaccel cuda", "-hwaccel nvdec", 1), fmt.Sprintf("videos/%v.mkv", test.Name))
+					worker.CreateWorkManager(p, app.HwInfo.GPU[0].ReplaceArgumentWithGPU(arg.Arguments), fmt.Sprintf("videos/%v.mkv", test.Name), 1)
 
 					finished_subtests++
 					p.Send(tui.ProgressInfo{Type: "task", Progress: float64(finished_subtests) / float64(len(test.Data))})
